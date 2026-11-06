@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小爱音箱 Pro · 管理</title>
+<link rel="stylesheet" href="/panel.css">
+<script src="/panel.js" defer></script>
+</head>
+<body>
+<main>
+<header>
+  <div><span class="label">LX06 · 局域网管理</span><h1>小爱音箱 Pro</h1></div>
+  <button id="refresh" class="secondary">刷新状态</button>
+</header>
+<p id="notice" class="notice" role="status" aria-live="polite">正在读取小爱设置…</p>
+
+<section>
+<h2>位置</h2>
+<p>用于小爱的默认天气和报时。可从地图复制目的地的经纬度。</p>
+<form id="location">
+<div class="row">
+<label>纬度 <input name="latitude" type="number" step="any" min="-90" max="90" required inputmode="decimal"></label>
+<label>经度 <input name="longitude" type="number" step="any" min="-180" max="180" required inputmode="decimal"></label>
+</div>
+<label>时区 <input name="timeZone" type="text" list="zones" maxlength="127" required spellcheck="false" placeholder="Pacific/Auckland"></label>
+<datalist id="zones"></datalist>
+<label class="check"><input name="consent" type="checkbox" required>同意把此坐标和时区用于小米的天气和报时服务</label>
+<button>保存位置</button>
+</form>
+</section>
+
+<section>
+<h2>蓝牙与同步</h2>
+<p id="connection">正在读取连接状态…</p>
+<form id="audio">
+<fieldset>
+<legend>蓝牙模式</legend>
+<label class="check"><input type="radio" name="mode" value="output" required>输出给另一台音箱</label>
+<label class="check"><input type="radio" name="mode" value="receive">接收手机音频</label>
+</fieldset>
+<div id="output-controls">
+  <label>外接音箱
+    <select name="target" aria-describedby="pairing-note"></select>
+  </label>
+  <div class="actions">
+    <button type="button" id="paired" class="secondary">已配对</button>
+    <button type="button" id="scan" class="secondary">搜索附近音箱</button>
+  </div>
+  <p id="pairing-note">让新音箱进入蓝牙配对模式再搜索。一次可选择一台外接音箱。</p>
+  <label>小爱本机延迟（毫秒）<input name="delay" type="number" min="0" max="750" step="1" required inputmode="numeric"></label>
+  <p>小爱先响就加大数值，外接音箱先响就减小。切换模式或修改延迟时，当前播放可能短暂停止。</p>
+</div>
+<p id="receive-note" hidden>保存后在手机的蓝牙设置里连接小爱。首次配对可在小爱音箱 App 里开启蓝牙可见。</p>
+<button>应用蓝牙设置</button>
+</form>
+</section>
+<footer>设置保存在这台小爱上。</footer>
+</main>
+</body>
+</html>
