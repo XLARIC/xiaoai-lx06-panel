@@ -2,7 +2,12 @@
 
 [简体中文](README.md) · English
 
-A lightweight LAN control panel that runs on the XiaoAI Speaker Pro. Open it from a phone or computer on the same Wi-Fi to configure location, Bluetooth mode, and playback delay.
+**Get local time and date answers in your time zone, and weather forecasts for your location.** Open the XiaoAI Speaker Pro's lightweight control panel from a phone or computer on the same Wi-Fi. The panel also manages Bluetooth and synchronized playback.
+
+## Fix local time, date, and weather
+
+- **Spoken time and date.** Select the IANA time zone where you use the speaker, such as `Pacific/Auckland` for Auckland. XiaoAI uses that zone for local time and date questions such as “What time is it?” and “What's today's date?”
+- **Local weather forecasts.** Enter your latitude and longitude to set the default forecast location. XiaoAI then uses that location when you ask about the weather without specifying a city.
 
 ## Compatibility
 
@@ -24,7 +29,7 @@ On the first SSH connection, verify the host fingerprint and authenticate with y
 
 ## Using the panel
 
-- **Set the location.** The location starts unset on a fresh install. Enter latitude, longitude, and an IANA time zone such as `Pacific/Auckland`. When saving, confirm that Xiaomi's weather and time services may use those values. The panel settings are stored on the speaker.
+- **Set the location.** On a fresh install, enter your coordinates and time zone under Location, confirm that Xiaomi's weather and time services may use those values, then save the settings to the speaker.
 - **Receive audio from a phone.** The panel starts in receive mode on a fresh install. Leave it in receive mode and connect to the XiaoAI from the phone's Bluetooth settings.
 - **Send and sync audio.** Put an external speaker into pairing mode, then select output mode in the panel and find, select, and pair one speaker. Changing modes may briefly interrupt playback. Both speakers will play the audio. The delay is applied to the XiaoAI itself. It can be set from 0 to 750 milliseconds and starts at 320 ms. Adjust by ear until the two speakers line up.
 
