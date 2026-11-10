@@ -19,6 +19,10 @@ apply_profile() {
         receive:*) return 0 ;;
         output:*) profile=',"-p","a2dp-source"' ;;
     esac
+    if [ "$mode" = output ]; then
+        . /data/lx06-lg-native/settings.sh
+        playback_idle || return 1
+    fi
     ubus -t 3 call service add '{"name":"bluetooth","script":"/etc/init.d/bluetooth","instances":{"instance1":{"command":["/usr/bin/bluealsa","-i","hci0","-p","a2dp-sink"'"$profile$debug"'],"respawn":[3600,5,5],"term_timeout":5}}}' >/dev/null || return 1
     return 2
 }

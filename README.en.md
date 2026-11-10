@@ -32,6 +32,7 @@ On the first SSH connection, verify the host fingerprint and authenticate with y
 - **Set the location.** On a fresh install, enter your coordinates and time zone under Location, confirm that Xiaomi's weather and time services may use those values, then save the settings to the speaker.
 - **Receive audio from a phone.** The panel starts in receive mode on a fresh install. Leave it in receive mode and connect to the XiaoAI from the phone's Bluetooth settings.
 - **Send and sync audio.** Put an external speaker into pairing mode, then select output mode in the panel and find, select, and pair one speaker. Changing modes may briefly interrupt playback. Both speakers will play the audio. The delay is applied to the XiaoAI itself. It can be set from 0 to 750 milliseconds and starts at 320 ms. Adjust by ear until the two speakers line up.
+- **Powering on the external speaker during music.** XiaoAI keeps playing locally and waits for playback to pause or stop before opening the Bluetooth audio output. To switch to both speakers, pause until the panel shows the external output is ready, then resume.
 
 To check a fresh speaker without installing, run `./install.sh --check 192.168.1.50` with the speaker’s address.
 

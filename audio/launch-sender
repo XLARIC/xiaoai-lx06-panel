@@ -4,5 +4,6 @@ umask 077
 . /data/lx06-lg-native/settings.sh
 load_audio_settings
 test "$mode" = output
+playback_idle || exit 0
 dir=/tmp/lx06-lg-native
 exec /data/lx06-lg-native/lg-pcm-send "bluealsa:DEV=$target,PROFILE=a2dp" >> "$dir/send.log" 2>&1

@@ -17,3 +17,10 @@ load_audio_settings() {
     case "$delay" in ''|*[!0-9]*) return 1 ;; esac
     [ "$delay" -le 750 ]
 }
+
+# Only a confirmed pause or stop is safe for opening a new Bluetooth PCM.
+playback_idle() {
+    info=$(ubus -t 2 call mediaplayer player_get_play_status | jsonfilter -e '@.info') || return 1
+    state=$(printf '%s\n' "$info" | jsonfilter -e '@.status') || return 1
+    case "$state" in 0|2) return 0 ;; *) return 1 ;; esac
+}
