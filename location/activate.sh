@@ -9,7 +9,7 @@ service_hash=cc17eb3e7b4981098aa145c88804be57dbd931fb0cf7dd9ea19fafd7a432c819
 mkdir /tmp/native-location-lock 2>/dev/null || { echo 'Another location change is running'; exit 1; }
 trap 'rm -f "$dir/service.init.new"; rmdir /tmp/native-location-lock' EXIT
 fail() { printf '%s\n' "$1" > /tmp/native-location.status; echo "$1" >&2; exit 1; }
-check_hash() { printf '%s  %s\n' "$1" "$2" | sha256sum -c >/dev/null; }
+check_hash() { [ "$(sha256sum "$2" | cut -d ' ' -f 1)" = "$1" ]; }
 check_hash 6ba3668e9fc39d5580bfd0ee79bee1b54e1f6ee76a13dee805a3c945e4a5eb45 /usr/lib/libaivs_sdk.so || fail 'Unsupported SDK; voice service retained'
 check_hash e7d03a1ddc5cd95caabfe6b87b0114236d2f54de07fd66b4e1f738252132f606 /usr/bin/mico_aivs_lab || fail 'Unsupported voice service; retained'
 check_hash "$service_hash" "$dir/original.init" || fail 'Unexpected saved service script; voice service retained'
