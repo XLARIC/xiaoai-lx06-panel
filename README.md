@@ -17,11 +17,11 @@
 
 ## 一键安装
 
-电脑与音箱连到同一个 Wi-Fi。在 macOS、Linux 或 Windows 的 WSL 中使用 OpenSSH。下载 [GitHub Releases](https://github.com/XLARIC/xiaoai-lx06-panel/releases) 中的 `xiaoai-lx06-panel-v0.1.0.tar.gz`，对照附带的 SHA-256 校验文件，然后运行以下命令。将示例 IP 换成音箱的实际局域网地址。
+电脑与音箱连到同一个 Wi-Fi。在 macOS、Linux 或 Windows 的 WSL 中使用 OpenSSH。下载 [GitHub Releases](https://github.com/XLARIC/xiaoai-lx06-panel/releases) 中的 `xiaoai-lx06-panel-v0.1.1.tar.gz`，对照附带的 SHA-256 校验文件，然后运行以下命令。将示例 IP 换成音箱的实际局域网地址。
 
 ```sh
-tar -xzf xiaoai-lx06-panel-v0.1.0.tar.gz
-cd xiaoai-lx06-panel-v0.1.0
+tar -xzf xiaoai-lx06-panel-v0.1.1.tar.gz
+cd xiaoai-lx06-panel-v0.1.1
 ./install.sh 192.168.1.50
 ```
 
@@ -32,7 +32,7 @@ cd xiaoai-lx06-panel-v0.1.0
 - **设置位置**。首次使用时，在「位置」里填写经纬度和时区，确认让小米天气和报时服务使用这些数据，再保存到音箱。
 - **接收手机音频**。首次安装采用接收模式。在小爱的管理页保持该模式，在手机蓝牙设置里连接小爱。
 - **蓝牙输出与同步**。让外接音箱进入配对模式，在网页选择输出模式，再搜索、选择并配对一台外接音箱。切换模式可能会短暂中断正在播放的音乐。小爱和外接音箱会同时播放。同步延迟是给小爱本机加的延迟，可在 0–750 毫秒之间调整，初始值是 320 毫秒。根据听感微调，直到两台声音对齐。
-- **播放中打开外接音箱**。小爱会继续本机播放，等音乐暂停或停止后再自动建立蓝牙音频输出。想切到双音箱播放时，可以暂停音乐，等网页显示外接音箱已就绪，再继续。
+- **先播歌，再打开外接音箱**。外接音箱的蓝牙链路建立后，小爱会自动短暂停歌，接入蓝牙音频后恢复同一首歌。每次连接只自动尝试一次，接入失败时恢复本机播放。若蓝牙链路尚未建立，可以暂停音乐，让小爱主动重连。
 
 如需只检查音箱是否兼容，可先运行 `./install.sh --check 192.168.1.50`，并替换为音箱实际地址。
 

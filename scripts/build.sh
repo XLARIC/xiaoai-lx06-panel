@@ -7,7 +7,7 @@ zig=${ZIG:-zig}
 target=arm-linux-gnueabihf.2.25
 case "$("$go" version)" in *' go1.26.'*) ;; *) echo 'Go 1.26.x is required.' >&2; exit 1 ;; esac
 [ "$("$zig" version)" = 0.15.2 ] || { echo 'Zig 0.15.2 is required.' >&2; exit 1; }
-version=v0.1.0
+version=v0.1.1
 name=xiaoai-lx06-panel-$version
 mkdir -p build dist
 work=$(mktemp -d "$PWD/build/package.XXXXXX")

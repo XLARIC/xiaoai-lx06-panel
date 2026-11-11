@@ -17,11 +17,11 @@
 
 ## One-command installation
 
-Connect the computer and speaker to the same Wi-Fi. Use OpenSSH on macOS, Linux, or Windows with WSL. Download `xiaoai-lx06-panel-v0.1.0.tar.gz` from [GitHub Releases](https://github.com/XLARIC/xiaoai-lx06-panel/releases), verify it against the accompanying SHA-256 checksum, then run the following commands. Replace the example IP with the speaker's LAN address.
+Connect the computer and speaker to the same Wi-Fi. Use OpenSSH on macOS, Linux, or Windows with WSL. Download `xiaoai-lx06-panel-v0.1.1.tar.gz` from [GitHub Releases](https://github.com/XLARIC/xiaoai-lx06-panel/releases), verify it against the accompanying SHA-256 checksum, then run the following commands. Replace the example IP with the speaker's LAN address.
 
 ```sh
-tar -xzf xiaoai-lx06-panel-v0.1.0.tar.gz
-cd xiaoai-lx06-panel-v0.1.0
+tar -xzf xiaoai-lx06-panel-v0.1.1.tar.gz
+cd xiaoai-lx06-panel-v0.1.1
 ./install.sh 192.168.1.50
 ```
 
@@ -32,7 +32,7 @@ On the first SSH connection, verify the host fingerprint and authenticate with y
 - **Set the location.** On a fresh install, enter your coordinates and time zone under Location, confirm that Xiaomi's weather and time services may use those values, then save the settings to the speaker.
 - **Receive audio from a phone.** The panel starts in receive mode on a fresh install. Leave it in receive mode and connect to the XiaoAI from the phone's Bluetooth settings.
 - **Send and sync audio.** Put an external speaker into pairing mode, then select output mode in the panel and find, select, and pair one speaker. Changing modes may briefly interrupt playback. Both speakers will play the audio. The delay is applied to the XiaoAI itself. It can be set from 0 to 750 milliseconds and starts at 320 ms. Adjust by ear until the two speakers line up.
-- **Powering on the external speaker during music.** XiaoAI keeps playing locally and waits for playback to pause or stop before opening the Bluetooth audio output. To switch to both speakers, pause until the panel shows the external output is ready, then resume.
+- **Starting music before powering on the external speaker.** Once the Bluetooth link is established, XiaoAI briefly pauses playback, opens the Bluetooth audio output, and resumes the same song. It attempts this automatically once per connection and resumes local playback if initialization fails. If the Bluetooth link has not been established, pause the music to allow XiaoAI to reconnect.
 
 To check a fresh speaker without installing, run `./install.sh --check 192.168.1.50` with the speaker’s address.
 

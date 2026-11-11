@@ -34,7 +34,8 @@ stop_sender() {
 
 link_up() {
     # A pending ACL can already appear in hcitool with handle 65535.
-    hcitool con | awk -v mac="$target" '
+    connection_snapshot=$(hcitool con 2>/dev/null) || return 2
+    printf '%s\n' "$connection_snapshot" | awk -v mac="$target" '
         $2 == "ACL" && $3 == mac && $4 == "handle" &&
         $5 ~ /^[0-9]+$/ && $5 < 3840 && $6 == "state" && $7 == 1 { connected=1 }
         END { exit !connected }
@@ -57,9 +58,7 @@ start_sender() {
     return 1
 }
 
-recover_output() {
-    # Fall back to the local output without changing Bluetooth during playback.
-    rm -f "$dir/ready"
+recover_idle_output() {
     playback_idle || return 0
     stop_sender
     if link_up && start_sender; then
@@ -75,6 +74,73 @@ recover_output() {
     start_sender
 }
 
+
+music_identity() {
+    printf '%s\n' "$1" | sed -E 's/"position"[[:space:]]*:[[:space:]]*[0-9]+/"position":0/g'
+}
+
+current_player_pid() {
+    ubus -t 2 call service list '{"name":"mediaplayer"}' | jsonfilter -e '@.mediaplayer.instances.instance1.pid'
+}
+
+resume_auto_pause() {
+    [ "$auto_pause_pending" = 1 ] || return 0
+    auto_pause_pending=0
+    load_audio_settings && [ "$mode" = output ] && [ "$target" = "$auto_pause_target" ] || return 0
+    [ "$(current_player_pid)" = "$auto_pause_pid" ] || return 0
+    current=$(ubus -t 2 call mediaplayer player_get_play_status | jsonfilter -e '@.info') || return 0
+    [ "$(printf '%s\n' "$current" | jsonfilter -e '@.status')" = 2 ] || return 0
+    detail=$(printf '%s\n' "$current" | jsonfilter -e '@.play_song_detail') || return 0
+    [ "$(music_identity "$detail")" = "$auto_pause_identity" ] || return 0
+    if [ -n "$auto_pause_detail" ]; then
+        [ "$detail" = "$auto_pause_detail" ] || return 0
+    fi
+    ubus -t 2 call mediaplayer player_play_operation '{"action":"play","media":"app_ios"}' >/dev/null || return 0
+}
+
+auto_attach_music() {
+    # Attempt once per observed target connection, including across supervisor restarts.
+    [ "${state:-}" = 1 ] || return 0
+    [ "$(printf '%s\n' "$info" | jsonfilter -e '@.media_type')" = 3 ] || return 0
+    [ "$(cat "$dir/auto-attach-target" 2>/dev/null || true)" != "$target" ] || return 0
+    before=$(printf '%s\n' "$info" | jsonfilter -e '@.play_song_detail') || return 0
+    [ -n "$before" ] || return 0
+    auto_pause_pid=$(current_player_pid) || return 0
+    auto_pause_target=$target
+    auto_pause_identity=$(music_identity "$before")
+    auto_pause_detail=
+    printf '%s\n' "$target" > "$dir/auto-attach-target"
+    ubus -t 2 call mediaplayer player_play_operation '{"action":"pause","media":"app_ios"}' >/dev/null || return 0
+    auto_pause_pending=1
+    sleep 1
+    if playback_idle && [ "$state" = 2 ]; then
+        auto_pause_detail=$(printf '%s\n' "$info" | jsonfilter -e '@.play_song_detail' || true)
+        # The target link is already up. Keep this pause bounded to PCM initialization.
+        if [ -n "$auto_pause_detail" ] &&
+            [ "$(music_identity "$auto_pause_detail")" = "$auto_pause_identity" ] && link_up; then
+            stop_sender
+            start_sender || true
+        fi
+    fi
+    resume_auto_pause
+}
+
+recover_output() {
+    rm -f "$dir/ready"
+    if link_up; then link_result=0; else link_result=$?; fi
+    if [ "$link_result" = 1 ]; then rm -f "$dir/auto-attach-target"; fi
+    state=
+    if playback_idle; then
+        recover_idle_output || true
+    elif [ "$link_result" = 0 ]; then
+        auto_attach_music || true
+    fi
+}
+
+auto_pause_pending=0
+trap resume_auto_pause EXIT
+trap 'exit 0' INT TERM HUP
+
 while :; do
     if ! load_audio_settings; then
         sleep 12
@@ -82,6 +148,7 @@ while :; do
     fi
     sender=$(ubus -t 2 call service list "$sender_service" | jsonfilter -e '@.lx06_lg_pcm.instances.sender.pid' || true)
     if [ "$mode" = receive ]; then
+        rm -f "$dir/auto-attach-target"
         stop_sender
         "$profile" receive || true
     elif "$profile" output; then
