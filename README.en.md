@@ -36,6 +36,26 @@ On the first SSH connection, verify the host fingerprint and authenticate with y
 
 To check a fresh speaker without installing, run `./install.sh --check 192.168.1.50` with the speaker’s address.
 
+## LG PL7 pairing and reconnection
+
+To enter pairing mode on the LG PL7, hold its Bluetooth button for about two seconds, release it after the tone, and check that the LED beside the Bluetooth symbol is blinking. Then search for and select the speaker in the panel. See the [official LG PL7 manual](https://www.lg.com/content/dam/channel/wcms/pl/support/products/documents/PL7.DEUSLLK_WEB_POL_MFL71448060.pdf) for the button instructions.
+
+If pairing succeeds but the external speaker cannot initiate a return connection, you can review and explicitly enable that permission through the XiaoAI's SSH connection. Run `bluetoothctl`, use `paired-devices` to identify the external speaker, and replace the example address in the following commands. The `trust` setting persistently allows that device to initiate connections, so review the address and permission before applying it.
+
+```text
+info AA:BB:CC:DD:EE:FF
+trust AA:BB:CC:DD:EE:FF
+quit
+```
+
+To revoke the permission, run `untrust AA:BB:CC:DD:EE:FF` inside `bluetoothctl`.
+
+If the Bluetooth output is ready but music remains paused, ask XiaoAI to continue playing. The following SSH command restored the current song on the tested device. Confirm that the playback position advances afterward.
+
+```sh
+ubus call mediaplayer player_play_operation '{"action":"play","media":"app_ios"}'
+```
+
 ## Uninstall
 
 From the extracted release directory, run the following command with the speaker's IP address.

@@ -36,6 +36,26 @@ cd xiaoai-lx06-panel-v0.1.0
 
 如需只检查音箱是否兼容，可先运行 `./install.sh --check 192.168.1.50`，并替换为音箱实际地址。
 
+## LG PL7 配对与回连
+
+LG PL7 进入配对等待时，长按蓝牙键约 2 秒，听到提示音后松开，确认蓝牙图标旁的灯闪烁，再在管理页搜索并选择音箱。具体按键说明见 [LG PL7 官方说明书](https://www.lg.com/content/dam/channel/wcms/pl/support/products/documents/PL7.DEUSLLK_WEB_POL_MFL71448060.pdf)。
+
+若配对成功后仍无法主动回连，可以通过音箱的 SSH 查看并选择是否允许该设备主动连接。运行 `bluetoothctl`，用 `paired-devices` 确认外接音箱的地址，再执行以下命令，将示例地址换成自己的音箱地址。`trust` 会持久允许该设备主动回连，请自行确认这一设置。
+
+```text
+info AA:BB:CC:DD:EE:FF
+trust AA:BB:CC:DD:EE:FF
+quit
+```
+
+需要撤回时，在 `bluetoothctl` 中运行 `untrust AA:BB:CC:DD:EE:FF`。
+
+蓝牙连接后若音乐仍处于暂停，可以对小爱说「继续播放」。通过 SSH 续播时，已在测试设备上验证以下指令会恢复当前歌曲，随后应确认播放进度持续增长。
+
+```sh
+ubus call mediaplayer player_play_operation '{"action":"play","media":"app_ios"}'
+```
+
 ## 卸载
 
 在解压后的目录运行以下命令。请替换示例 IP。
