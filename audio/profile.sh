@@ -1,8 +1,10 @@
 #!/bin/sh
-# Exit 2 after requesting a profile change. The new process is still starting.
+# Exit 2 after requesting a change, or 3 when a probe finds a change is needed.
 set -eu
 mode=$1
 case "$mode" in output|receive) ;; *) exit 1 ;; esac
+probe=${2:-}
+case "$probe" in ''|--check) ;; *) exit 1 ;; esac
 service='{"name":"bluetooth"}'
 apply_profile() {
     pid=$(ubus -t 2 call service list "$service" | jsonfilter -e '@.bluetooth.instances.instance1.pid') || return 1
@@ -19,6 +21,7 @@ apply_profile() {
         receive:*) return 0 ;;
         output:*) profile=',"-p","a2dp-source"' ;;
     esac
+    [ "$probe" != --check ] || return 3
     if [ "$mode" = output ]; then
         . /data/lx06-lg-native/settings.sh
         playback_idle || return 1

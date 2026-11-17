@@ -7,6 +7,7 @@ sender_service='{"name":"lx06_lg_pcm"}'
 sender_start='{"name":"lx06_lg_pcm","instances":{"sender":{"command":["/data/lx06-lg-native/launch-sender"],"term_timeout":2}}}'
 
 connect_paired() {
+    connect_target=$target
     info=$({
         sleep 1
         printf 'info %s\nquit\n' "$target"
@@ -14,7 +15,7 @@ connect_paired() {
     printf '%s\n' "$info" | grep -Fq 'Paired: yes' || return 1
     {
         sleep 1
-        if ! playback_idle; then
+        if ! load_audio_settings || [ "$mode" != output ] || [ "$target" != "$connect_target" ]; then
             printf 'quit\n'
             exit 0
         fi
@@ -98,31 +99,67 @@ resume_auto_pause() {
     ubus -t 2 call mediaplayer player_play_operation '{"action":"play","media":"app_ios"}' >/dev/null || return 0
 }
 
-auto_attach_music() {
-    # Attempt once per observed target connection, including across supervisor restarts.
+pause_music_for() {
+    pause_action=$1
+    pause_marker=$2
+    pause_key=$3
+    selected=$target
+    state=
+    if playback_idle; then return 0; fi
+    load_audio_settings && [ "$mode" = output ] && [ "$target" = "$selected" ] || return 0
     [ "${state:-}" = 1 ] || return 0
     [ "$(printf '%s\n' "$info" | jsonfilter -e '@.media_type')" = 3 ] || return 0
-    [ "$(cat "$dir/auto-attach-target" 2>/dev/null || true)" != "$target" ] || return 0
+    [ "$(cat "$pause_marker" 2>/dev/null || true)" != "$pause_key" ] || return 0
     before=$(printf '%s\n' "$info" | jsonfilter -e '@.play_song_detail') || return 0
     [ -n "$before" ] || return 0
     auto_pause_pid=$(current_player_pid) || return 0
     auto_pause_target=$target
     auto_pause_identity=$(music_identity "$before")
     auto_pause_detail=
-    printf '%s\n' "$target" > "$dir/auto-attach-target"
+    printf '%s\n' "$pause_key" > "$pause_marker"
     ubus -t 2 call mediaplayer player_play_operation '{"action":"pause","media":"app_ios"}' >/dev/null || return 0
     auto_pause_pending=1
     sleep 1
     if playback_idle && [ "$state" = 2 ]; then
         auto_pause_detail=$(printf '%s\n' "$info" | jsonfilter -e '@.play_song_detail' || true)
-        # The target link is already up. Keep this pause bounded to PCM initialization.
         if [ -n "$auto_pause_detail" ] &&
-            [ "$(music_identity "$auto_pause_detail")" = "$auto_pause_identity" ] && link_up; then
-            stop_sender
-            start_sender || true
+            [ "$(music_identity "$auto_pause_detail")" = "$auto_pause_identity" ]; then
+            load_audio_settings && [ "$mode" = output ] && [ "$target" = "$auto_pause_target" ] &&
+                "$pause_action" || true
         fi
     fi
     resume_auto_pause
+}
+
+prepare_sender() {
+    # Do not keep music paused while waiting for an absent speaker.
+    link_up || return 1
+    stop_sender
+    start_sender
+}
+
+prepare_profile() {
+    stop_sender
+    if "$profile" output; then return 0; else profile_result=$?; fi
+    [ "$profile_result" = 2 ] || return 1
+    for attempt in 1 2; do
+        sleep 1
+        if "$profile" output --check; then return 0; fi
+    done
+    return 1
+}
+
+recover_profile() {
+    state=
+    if playback_idle; then
+        prepare_profile || true
+    else
+        profile_pid=$(ubus -t 2 call service list '{"name":"bluetooth"}' |
+            jsonfilter -e '@.bluetooth.instances.instance1.pid') || return 0
+        [ -n "$profile_pid" ] || return 0
+        # One short pause per native Bluetooth service generation.
+        pause_music_for prepare_profile "$dir/auto-profile-attempt" "$profile_pid $target"
+    fi
 }
 
 recover_output() {
@@ -133,7 +170,10 @@ recover_output() {
     if playback_idle; then
         recover_idle_output || true
     elif [ "$link_result" = 0 ]; then
-        auto_attach_music || true
+        pause_music_for prepare_sender "$dir/auto-attach-target" "$target" || true
+    elif [ "$link_result" = 1 ]; then
+        # Establish the paired link first. PCM acquisition still requires a pause.
+        connect_paired || true
     fi
 }
 
@@ -151,7 +191,7 @@ while :; do
         rm -f "$dir/auto-attach-target"
         stop_sender
         "$profile" receive || true
-    elif "$profile" output; then
+    elif "$profile" output --check; then
         if ! link_up || [ -z "$sender" ] || [ ! -r "/proc/$sender/cmdline" ] ||
             [ ! -f "$dir/ready" ] ||
             ! tr '\000' '\n' < "/proc/$sender/cmdline" | grep -Fxq "bluealsa:DEV=$target,PROFILE=a2dp"; then
@@ -159,6 +199,9 @@ while :; do
         elif [ -f "$dir/send.log" ] && [ "$(wc -c < "$dir/send.log")" -gt 131072 ]; then
             : > "$dir/send.log"
         fi
+    else
+        profile_result=$?
+        if [ "$profile_result" = 3 ]; then recover_profile || true; fi
     fi
     sleep 12
 done
